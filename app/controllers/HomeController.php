@@ -1,5 +1,6 @@
 <?php
 
+
 class HomeController extends BaseController {
     /*
       |--------------------------------------------------------------------------
@@ -28,13 +29,13 @@ class HomeController extends BaseController {
 
         foreach ($items as $item) {
             //echo "HELLO!!!";
-            $title = $item->get_title();
+            $title = $item->getName();
 
-            //var_dump($title);
+            Log::debug($title);
 
             if (trim($title) == 'EuromilhÃµes') {
 
-                $description = $item->get_description();
+                $description = $item->getContent();
                 preg_match('/&euro;(.+?)<br>/', $description, $matches);
 
                 $next_prize_value = $matches[1];
@@ -49,7 +50,7 @@ class HomeController extends BaseController {
 
                 $next_withdrawal_already_fetched = Next_withdrawal::get_by_serial_number($next_withdrawal_id);
 
-				
+
 
                 $message = '';
 
@@ -68,7 +69,7 @@ class HomeController extends BaseController {
                 } else {
                    // $message = 'The next withdrawal were already fetched at ' . $next_withdrawal_already_fetched->first()->created_at . "<BR/>";
                 }
-                
+
                 $next_withdrawal = Next_withdrawal::last();
 
 				$message .= "The next withrawal will be the {$next_withdrawal->nr}, at {$next_withdrawal->scheduled_to}, ".
@@ -84,16 +85,16 @@ class HomeController extends BaseController {
         $feed_parser = App::make('myfeedparser');
         $feed_parser->set_feed_url('https://www.jogossantacasa.pt/web/SCRss/rssFeedCartRes');
         $items = $feed_parser->fetch();
-        
-      
+
+
 
         //var_dump($items);
-        
+
         foreach ($items as $item) {
-            $title = $item->get_title();
+            $title = $item->getName();
             //echo "$title\n";
             if (trim($title) == 'Euromilhões') {
-                $description = strip_tags($item->get_description());
+                $description = strip_tags($item->getContent());
                 $tokens = explode(':', $description);
                 preg_match("/([0-9]{3}\/[0-9]{4})/", $tokens[0], $matches);
                 $serial_number = $matches[1];
@@ -123,7 +124,7 @@ class HomeController extends BaseController {
 
 
         $last_withdrawal = Withdrawal::last();
-        
+
         if (!empty($last_withdrawal)) {
 	        $message = "The last withrawal were {$last_withdrawal->nr}, with the key <B>{$last_withdrawal->key}</B>"
     	    .", done at {$last_withdrawal->created_at}";}
@@ -134,11 +135,11 @@ class HomeController extends BaseController {
         //var_dump($message);
 
         //var_dump($last_withdrawal);
- 
+
          //return Redirect::to('/')->with('message', $message);
 
         return $message;
-       
+
     }
 
 
@@ -199,22 +200,22 @@ class HomeController extends BaseController {
 
         if ( App::runningInConsole() ) {
             Log::info( "This was invoked from the CLI, sending e-mail...\n");
-            
+
             $sucess = Mail::send('emails.empty', array('content' => $output), function($message) {
                 $message->from('noreply@casa-viana.com', 'Euromillions checker');
                 $message->to('pescadordigital@gmail.com');
                 $message->subject('Euromillions checker results');
             });
 
-           
+
 
             if ($sucess !== TRUE) {
                 Log::info( "Someting wrong happenned when sending the e-mail...");
-                
+
             } else {
                Log::info( "The e-mail were sent with success!");
             }
-            
+
             echo PHP_EOL;
         } else {
             return $output;
