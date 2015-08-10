@@ -23,6 +23,7 @@
                 @endforeach
             </tbody>
         </table>
+        <?php echo $shots->links(); ?>
     </div>
 </div>
 @overwrite

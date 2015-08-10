@@ -20,7 +20,7 @@ class HomeController extends BaseController {
     }
 
     public function getIndexShots() {
-            $shots = Shot::orderBy('registered_at','desc')->get();
+            $shots = Shot::orderBy('registered_at','desc')->paginate(10);
            // Log::debug('shots',array($shots));
             return View::make('indexShots')->with('shots', $shots);
     }
