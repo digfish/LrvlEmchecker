@@ -8,7 +8,8 @@
                 "twbs/bootstrap": "v2.3.2",
 		"simplepie/simplepie": "dev-master",
 		"barryvdh/laravel-vendor-cleanup": "1.*",
-		"kmelia/monolog-stdout-handler": "dev-master"
+		"kmelia/monolog-stdout-handler": "dev-master",
+		"fastfeed/fastfeed": "^0.4.0"
 	},
 	"autoload": {
 		"classmap": [
@@ -17,6 +18,8 @@
 			"app/models",
 			"app/database/migrations",
 			"app/database/seeds",
+			"app/my",
+
 			"app/tests/TestCase.php"
 		]
 	},

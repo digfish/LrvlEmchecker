@@ -12,8 +12,8 @@
  */
 
 Route::get('/', function() {
-            $shots = Shot::all();
-            Log::info(__METHOD__, array($shots));
+            $shots = Shot::orderBy('registered_at','desc')->get();
+            Log::debug('shots',array($shots));
             return View::make('indexShots')->with('shots', $shots);
         });
 

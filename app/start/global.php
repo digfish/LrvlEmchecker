@@ -55,8 +55,6 @@ $monolog = Log::getMonolog();
 
 /* Add the FirePHP handler */
 $monolog->pushHandler(new \Monolog\Handler\FirePHPHandler());
-
-
 $monolog->pushHandler(new \Monolog\Handler\StdoutHandler() );
 
 /*
@@ -75,18 +73,17 @@ App::down(function() {
         });
 
 // load simplepie
-        
+
 //App::bind('simplepie',function($app){
 //    $simplepie = new my\SimplePieLoader();
 //    $simplepie->get()->set_cache_location(storage_path() . '/simplepie');
 //    var_dump($simplepie);
 //    return $simplepie;
-//});        
+//});
 
 App::bind('myfeedparser', function($app) {
-            $simplepie = new FeedParser();
-            $simplepie->set_cache_location(storage_path() . '/simplepie');
-            return $simplepie;
+            $feedparser = new FastFeedInvoker();
+            return $feedparser;
         });
 
 /*
