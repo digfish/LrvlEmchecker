@@ -19,6 +19,36 @@ class HomeController extends BaseController {
         return View::make('hello');
     }
 
+    public function getIndexShots() {
+            $shots = Shot::orderBy('registered_at','desc')->get();
+           // Log::debug('shots',array($shots));
+            return View::make('indexShots')->with('shots', $shots);
+    }
+
+    public function getIndexWithdrawals() {
+            $withdrawals = Withdrawal::all();
+            // Log::debug(withdrawals, array($withdrawals));
+            return View::make('indexWithdrawals')->with('withdrawals', $withdrawals);
+    }
+
+    public function getRegisterShotForm() {
+            $next_withdrawal = Next_withdrawal::last();
+            return View::make('showRegisterForm')->with('next_withdrawal',$next_withdrawal);
+        }
+
+    public  function postRegisterShotForm() {
+            $new_shot = new Shot();
+
+            $new_shot->shot = Input::get('shot_numbers') . ' + ' . Input::get('shot_stars');
+            $new_shot->registered_at = date('Y-m-d H:i:s');
+            $new_shot->nr = Input::get('withdrawal_id');
+
+            $new_shot->save();
+
+            return Redirect::to('/')->with('message', "Your key {$new_shot->shot}"
+                            . " were successfully registered for the withdrawal {$new_shot->nr}");
+    }
+
     public function next_withdrawal() {
 
         $feed_parser = App::make('myfeedparser');
@@ -87,34 +117,31 @@ class HomeController extends BaseController {
         $items = $feed_parser->fetch();
 
 
-
-        //var_dump($items);
+/*        print "<PRE>";
+       dd($items);*/
 
         foreach ($items as $item) {
             $title = $item->getName();
             //echo "$title\n";
-            if (trim($title) == 'Euromilhões') {
+            if (trim($title) == 'EuromilhÃµes') {
                 $description = strip_tags($item->getContent());
                 $tokens = explode(':', $description);
                 preg_match("/([0-9]{3}\/[0-9]{4})/", $tokens[0], $matches);
                 $serial_number = $matches[1];
                 $key = trim($tokens[1]);
-                $date = $item->get_date();
-                $time = strtotime($date);
-                $datetime = date('Y-m-d H:i:s', $time);
+                $date = $item->getDate()->format('Y-m-d H:i:s');
+                //$time = strtotime($date);
+                //$datetime = date('Y-m-d H:i:s', $time);
 
                 $withdrawal_already_fetched = Withdrawal::get_by_serial_number( $serial_number);
 
-
-
-                if ($withdrawal_already_fetched->count() == 0) {
-                    echo ("Last withdrawal fetched!");
+                if ($withdrawal_already_fetched->count() == 0 && !empty($serial_number)) {
+                    Log::debug("Last withdrawal fetched!");
                     $new_withdrawal = new Withdrawal();
-                    $withdrawal->nr = $serial_number;
-                    $withdrawal->key = $key;
-                    $withdrawal->created_at = $datetime;
-                    $withdrawal->save();
-
+                    $new_withdrawal->nr = $serial_number;
+                    $new_withdrawal->key = $key;
+                    $new_withdrawal->created_at = $date;
+                    $new_withdrawal->save();
                 } else {
                     echo "This withdrawal ($serial_number) were already fetched!" . PHP_EOL;
                 }
@@ -158,43 +185,47 @@ class HomeController extends BaseController {
         ob_start();
 
         $last_withdrawal = Withdrawal::last();
-        echo ("The last withdrawal at " . $last_withdrawal->created_at . " were " . $last_withdrawal->key);
-        echo PHP_EOL;
-        $last_key = Shot::last();
-        echo ("Your last shot: " . $last_key->shot );
-        echo PHP_EOL;
-        $last_withdrawal_tokens = explode('+', $last_withdrawal->key);
-        $last_key_tokens = explode('+', $last_key->shot);
 
-        $last_withdrawal_numbers = explode(' ', trim($last_withdrawal_tokens[0]));
-        $last_key_numbers = explode(' ', trim($last_key_tokens[0]));
+        if ($last_withdrawal != NULL) {
 
-        $common_numbers = array_intersect($last_withdrawal_numbers, $last_key_numbers);
+            echo ("The last withdrawal at " . $last_withdrawal->created_at . " were " . $last_withdrawal->key);
+            echo PHP_EOL;
+            $last_key = Shot::last();
+            echo ("Your last shot: " . $last_key->shot );
+            echo PHP_EOL;
+            $last_withdrawal_tokens = explode('+', $last_withdrawal->key);
+            $last_key_tokens = explode('+', $last_key->shot);
 
-        $last_withdrawal_stars = explode(' ', trim($last_withdrawal_tokens[1]));
-        $last_key_stars = explode(' ', trim($last_key_tokens[1]));
+            $last_withdrawal_numbers = explode(' ', trim($last_withdrawal_tokens[0]));
+            $last_key_numbers = explode(' ', trim($last_key_tokens[0]));
 
-        $common_stars = array_intersect($last_withdrawal_stars, $last_key_stars);
+            $common_numbers = array_intersect($last_withdrawal_numbers, $last_key_numbers);
 
-        echo PHP_EOL;
-        echo PHP_EOL;
+            $last_withdrawal_stars = explode(' ', trim($last_withdrawal_tokens[1]));
+            $last_key_stars = explode(' ', trim($last_key_tokens[1]));
+
+            $common_stars = array_intersect($last_withdrawal_stars, $last_key_stars);
+
+            echo PHP_EOL;
+            echo PHP_EOL;
 
 
-        if (count($common_numbers) > 0) {
-            echo "You had hit " . count($common_numbers) . " number(s) : " . join(' ', $common_numbers);
-        } else {
-            echo "You had not hit any number!";
+            if (count($common_numbers) > 0) {
+                echo "You had hit " . count($common_numbers) . " number(s) : " . join(' ', $common_numbers);
+            } else {
+                echo "You had not hit any number!";
+            }
+
+            echo PHP_EOL;
+
+            if (count($common_stars) > 0) {
+                echo "You had hit " . count($common_stars) . " star(s) : " . join(' ', $common_stars);
+            } else {
+                echo "You had not hit any star!";
+            }
+
+            echo PHP_EOL;
         }
-
-        echo PHP_EOL;
-
-        if (count($common_stars) > 0) {
-            echo "You had hit " . count($common_stars) . " star(s) : " . join(' ', $common_stars);
-        } else {
-            echo "You had not hit any star!";
-        }
-
-        echo PHP_EOL;
 
        $output = ob_get_clean();
 
